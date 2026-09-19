@@ -42,17 +42,52 @@
     background-size: 14px 14px;
   }
   .wrap{ max-width: 480px; margin: 0 auto; padding: 20px 18px 60px; }
-  .brand{ display:flex; align-items:baseline; gap:10px; margin-bottom: 4px; position:relative; }
-  .brand::before{ content:""; position:absolute; left:-24px; top:-34px; width:150px; height:150px;
-    background: radial-gradient(circle, rgba(47,232,208,0.30), transparent 70%); filter: blur(18px); z-index:-1; pointer-events:none; }
-  .brand h1{ font-family: 'Inter', sans-serif; font-size: 28px; font-weight:800; margin:0; color: var(--chalk); letter-spacing: -0.02em; }
-  .brand span{ font-size: 13px; color: var(--chalk-faint); }
-  .subtitle{ font-size: 13px; color: var(--chalk-faint); margin: 0 0 18px; line-height:1.6; }
+
+  /* --- top bar --- */
+  .topbar{ display:flex; align-items:center; justify-content:space-between; margin-bottom: 16px; position:relative; }
+  .brand-btn{ background:none; border:none; cursor:pointer; padding:0; text-align:left; position:relative; }
+  .brand-btn::before{
+    content:""; position:absolute; left:-20px; top:-28px; width:140px; height:140px;
+    background: radial-gradient(circle, rgba(47,232,208,0.30), transparent 70%); filter: blur(18px); z-index:-1; pointer-events:none;
+  }
+  .brand-title{ font-family:'Inter', sans-serif; font-weight:800; font-size:24px; color:var(--chalk); letter-spacing:-0.02em; }
+  .topbar-right{ display:flex; align-items:center; gap:10px; }
+  .current-file{ font-size:12px; color:var(--chalk-faint); max-width:120px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .hamburger-btn{
+    display:flex; flex-direction:column; justify-content:center; align-items:center; gap:4px;
+    width:34px; height:34px; background:none; border:1px solid var(--line-strong); border-radius:9px; cursor:pointer; padding:0; flex-shrink:0;
+  }
+  .hamburger-btn span{ display:block; height:2px; width:16px; background:var(--chalk); border-radius:2px; }
+
+  .menu-backdrop{
+    position:fixed; inset:0; background:rgba(0,0,0,0.55); z-index:40; opacity:0; pointer-events:none;
+    transition:opacity 0.25s ease;
+  }
+  .menu-backdrop.show{ opacity:1; pointer-events:auto; }
+  .menu-panel{
+    position:fixed; top:0; right:0; height:100%; width:80%; max-width:320px;
+    background:var(--board-2); border-left:1px solid var(--line-strong); z-index:50;
+    transform:translateX(100%); transition:transform 0.32s cubic-bezier(.4,0,.2,1);
+    padding:20px 16px; box-shadow:-24px 0 60px rgba(0,0,0,0.55);
+    display:flex; flex-direction:column; gap:2px;
+  }
+  .menu-panel.open{ transform:translateX(0); }
+  .menu-header{ display:flex; align-items:center; justify-content:space-between; margin-bottom:20px; }
+  .menu-header span{ font-family:'Inter', sans-serif; font-weight:700; font-size:17px; color:var(--chalk); }
+  .menu-close{
+    background:none; border:1px solid var(--line-strong); color:var(--chalk); width:30px; height:30px;
+    border-radius:9px; cursor:pointer; font-size:13px;
+  }
+  .menu-panel button[data-menu]{
+    background:none; border:none; color:var(--chalk); text-align:left; padding:14px 12px; border-radius:12px;
+    font-size:14.5px; cursor:pointer; font-family:'Noto Sans JP', sans-serif;
+  }
+  .menu-panel button[data-menu]:hover{ background: var(--board); color: var(--yellow); }
 
   nav{ display:flex; border-bottom: 1px dashed var(--line-strong); margin-bottom: 22px; overflow-x:auto; }
   nav button{
     flex: 1; background:none; border:none; color: var(--chalk-dim);
-    font-family:'Noto Sans JP', sans-serif; font-size: 12.5px; font-weight:500;
+    font-family:'Noto Sans JP', sans-serif; font-size: 13px; font-weight:500;
     padding: 10px 4px 12px; cursor:pointer; white-space:nowrap;
     border-bottom: 2px solid transparent; transition: color 0.15s;
   }
@@ -68,15 +103,66 @@
   }
   .empty button{ margin-top:14px; }
 
-  /* --- flashcard --- */
-  .due-count{ font-size: 13px; color: var(--chalk-faint); margin-bottom: 14px; display:flex; justify-content:space-between; align-items:center; }
+  /* --- home / file picker --- */
+  .file-list{ margin-bottom: 22px; padding-top: 4px; }
+  .file-row{
+    display:flex; align-items:center; gap:12px; border: 1px solid transparent;
+    border-radius: 14px; padding: 10px 8px; margin-bottom: 4px; cursor:pointer; background: transparent;
+    transition: background 0.15s, border-color 0.15s;
+  }
+  .file-row:hover{ background: var(--board-2); border-color: var(--line-strong); }
+  .file-icon{
+    width:42px; height:42px; border-radius: 12px; flex-shrink:0; overflow:hidden;
+    display:flex; align-items:center; justify-content:center; cursor:pointer;
+    font-family:'Inter', sans-serif; font-weight:700; font-size:16px; color:#fff;
+  }
+  .file-icon img{ width:100%; height:100%; object-fit:cover; }
+  .file-info{ flex:1; min-width:0; }
+  .file-name{ font-size: 14.5px; color: var(--chalk); font-weight:600; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .file-meta{ font-size: 11.5px; color: var(--chalk-faint); margin-top: 2px; }
+  .star-btn{
+    background:none; border:none; font-size:16px; cursor:pointer; padding: 4px 6px; flex-shrink:0;
+    color: var(--line-strong);
+  }
+  .star-btn.active{ color: var(--yellow); }
+  .file-del{ background:none; border:none; color: var(--chalk-faint); font-size:15px; cursor:pointer; padding: 4px 6px; flex-shrink:0; }
+  .file-del:hover{ color: var(--coral); }
+
+  .fab-add{
+    position:fixed; right:24px; bottom:28px; width:56px; height:56px; border-radius:50%;
+    background: var(--yellow); color: var(--board); font-size:28px; line-height:1; border:none;
+    display:flex; align-items:center; justify-content:center; cursor:pointer;
+    box-shadow: 0 10px 30px rgba(47,232,208,0.35); z-index:15;
+  }
+  .modal-backdrop{
+    position:fixed; inset:0; background:rgba(0,0,0,0.6); z-index:60;
+    display:flex; align-items:flex-end; justify-content:center;
+  }
+  .modal-backdrop[hidden]{ display:none; }
+  .modal-card{
+    background: var(--board-2); border: 1px solid var(--line-strong); border-radius: 20px 20px 0 0;
+    padding: 20px; width:100%; max-width:480px; box-shadow: 0 -16px 50px rgba(0,0,0,0.55);
+  }
+  .chip-row{ display:flex; flex-wrap:wrap; gap:8px; margin-bottom: 12px; }
+  .suggest-chip{
+    background: var(--board); border: 1px solid var(--line-strong); color: var(--chalk-dim);
+    font-size: 12px; padding: 6px 12px; border-radius: 14px; cursor:pointer; font-family:'Noto Sans JP', sans-serif;
+  }
+  .suggest-chip:hover{ border-color: var(--yellow); color: var(--yellow); }
+  .modal-card input{
+    width:100%; background: var(--board); border: 1px solid var(--line-strong); color: var(--chalk);
+    border-radius: 8px; padding: 9px 10px; font-size: 14px; font-family:'Noto Sans JP', sans-serif; margin-bottom: 12px;
+  }
+  .modal-card input:focus{ outline:none; border-color: var(--yellow); }
+
+  /* --- review: direction toggle + scroll list --- */
   .direction-toggle{ display:flex; gap:8px; margin-bottom: 14px; }
   .dir-btn{
     flex:1; background: var(--board-2); border: 1px solid var(--line-strong); color: var(--chalk-dim);
     font-size: 12.5px; padding: 8px 6px; border-radius: 999px; cursor:pointer; font-family:'Noto Sans JP', sans-serif;
   }
   .dir-btn.active{ border-color: var(--yellow); color: var(--yellow); background: var(--yellow-dim); }
-  .scroll-hint{ font-size: 11.5px; color: var(--chalk-faint); margin: -6px 0 14px; line-height:1.5; }
+  .due-count{ font-size: 13px; color: var(--chalk-faint); margin-bottom: 14px; display:flex; justify-content:space-between; align-items:center; }
   .review-scroll{
     height: 60vh; min-height: 400px; overflow-y:auto; scroll-snap-type: y mandatory;
     -webkit-overflow-scrolling:touch; scrollbar-width:none;
@@ -92,6 +178,8 @@
   }
   .judge-status.status-yes{ color: var(--mint); border-color: var(--mint-dim); background: var(--mint-dim); }
   .judge-status.status-no{ color: var(--coral); border-color: var(--coral-dim); background: var(--coral-dim); }
+
+  /* --- flashcard --- */
   .card-stage{ perspective: 1000px; margin-bottom: 16px; }
   .flashcard{
     position:relative; min-height: 240px; border: 1px solid var(--line-strong);
@@ -171,7 +259,7 @@
   .add-form{ border: 1px solid var(--line-strong); border-radius: 18px; padding: 16px; margin-bottom: 20px; background: var(--board-2); }
   .add-form .row{ display:flex; gap:10px; margin-bottom:10px; }
   .add-form input{
-    flex:1; background: var(--board-2); border: 1px solid var(--line-strong); color: var(--chalk);
+    flex:1; background: var(--board); border: 1px solid var(--line-strong); color: var(--chalk);
     border-radius: 4px; padding: 9px 10px; font-size: 14px; font-family:'Noto Sans JP', sans-serif;
   }
   .add-form input:focus{ outline:none; border-color: var(--yellow); }
@@ -179,7 +267,6 @@
   .type-toggle{ display:flex; gap:16px; margin-bottom: 12px; font-size: 13px; color: var(--chalk-dim); }
   .type-toggle label{ display:flex; align-items:center; gap:6px; cursor:pointer; }
   .lookup-row{ margin-bottom: 10px; }
-  .lookup-hint{ font-size: 11px; color: var(--chalk-faint); margin: 6px 0 0; line-height:1.5; }
   .candidates{ display:flex; flex-wrap:wrap; gap:8px; margin-top: 10px; }
   .candidate-chip{
     background: var(--board); border: 1px solid var(--line-strong); color: var(--chalk-dim);
@@ -238,20 +325,39 @@
 </head>
 <body>
 <div class="wrap">
-  <div class="brand"><h1>WordStreak</h1><span>単語ノート</span></div>
-  <p class="subtitle">忘れかけた頃にもう一度出す仕組み(間隔反復)で、覚えた単語と熟語を長く記憶に残します。</p>
+  <header class="topbar">
+    <button class="brand-btn" id="brand-home-btn" type="button"><span class="brand-title">WordStreak</span></button>
+    <div class="topbar-right">
+      <span class="current-file" id="current-file-name"></span>
+      <button class="hamburger-btn" id="hamburger-btn" type="button" aria-label="メニュー">
+        <span></span><span></span><span></span>
+      </button>
+    </div>
+  </header>
 
-  <nav>
+  <div class="menu-backdrop" id="menu-backdrop"></div>
+  <div class="menu-panel" id="menu-panel">
+    <div class="menu-header">
+      <span>メニュー</span>
+      <button class="menu-close" id="menu-close-btn" type="button" aria-label="閉じる">✕</button>
+    </div>
+    <button type="button" data-menu="stats">成績</button>
+    <button type="button" data-menu="settings">設定</button>
+    <button type="button" data-menu="home">ファイルを切り替える</button>
+  </div>
+
+  <input type="file" id="icon-file-input" accept="image/*" style="display:none">
+
+  <nav id="main-nav">
     <button data-screen="review" class="active">今日の復習</button>
     <button data-screen="quiz">クイズ</button>
     <button data-screen="list">単語帳</button>
-    <button data-screen="stats">成績</button>
-    <button data-screen="settings">設定</button>
   </nav>
 
   <div id="loading" class="loading">読み込み中…</div>
 
   <div id="app" style="display:none">
+    <section class="screen" id="screen-home"><div id="home-body"></div></section>
     <section class="screen active" id="screen-review"><div id="review-body"></div></section>
     <section class="screen" id="screen-quiz"><div id="quiz-body"></div></section>
     <section class="screen" id="screen-list">
@@ -268,7 +374,6 @@
           <button class="btn" id="btn-lookup" type="button" style="flex:1">訳の候補を今すぐ調べる</button>
           <a id="cambridge-link" class="btn" href="#" target="_blank" rel="noopener noreferrer" style="flex:1; text-align:center; text-decoration:none; opacity:0.4; pointer-events:none;">ケンブリッジ辞典で確認</a>
         </div>
-        <p class="lookup-hint">2文字以上入力すると自動で候補が表示されます(オンライン辞書を使うためインターネット接続が必要です)。「ケンブリッジ辞典で確認」を押すと、本家の辞典サイトでその単語の正確な意味・例文を新しいタブで開けます。</p>
         <div class="candidates" id="candidates"></div>
         <div class="row" style="margin-top:12px">
           <input id="in-ja" type="text" placeholder="意味 (候補から選ぶか直接入力)">
@@ -293,7 +398,7 @@
       </div>
       <div class="settings-block">
         <h3>復習の出題方向</h3>
-        <p class="desc">「今日の復習」でカードの表面に何を表示するかを選べます。ランダムにすると、英語と日本語の両方向を混ぜて出題します。</p>
+        <p class="desc">「今日の復習」でカードの表面に何を表示するかを選べます。ランダムにすると、英語と日本語の両方向を混ぜて出題します。「今日の復習」画面の上部でも切り替えられます。</p>
         <label class="radio-card" id="radio-en-ja">
           <input type="radio" name="direction" value="en-ja"> 英語 → 日本語(標準)
         </label>
@@ -333,16 +438,17 @@ const DEFAULT_WORDS = [
 
 const BOX_INTERVAL_DAYS = [0, 1, 2, 4, 7, 14];
 const MAX_BOX = BOX_INTERVAL_DAYS.length - 1;
-const STORE_KEY = "vocab-notebook-v1";
+const STORE_KEY = "vocab-notebook-store-v2";
+const OLD_STORE_KEY = "vocab-notebook-v1";
 const SETTINGS_KEY = "vocab-notebook-settings-v1";
 
+let store = { files: [], wordsByFile: {} };
+let currentFileId = null;
 let words = [];
 let settings = { accent: "uk", reviewDirection: "en-ja" };
-let currentScreen = "review";
-let reviewQueue = null; // null = 未構築。タブを切り替えても保持し、続きから再開する
-let reviewIndex = 0;
+let currentScreen = "home";
+let reviewQueue = null;
 let quizState = null;
-let chosenCandidate = null;
 let voicesCache = [];
 let lookupToken = 0;
 let lookupTimer = null;
@@ -354,6 +460,20 @@ function isDue(w){
   if(!w.lastReviewed) return true;
   const interval = BOX_INTERVAL_DAYS[w.box] || 0;
   return daysBetween(w.lastReviewed, todayStr()) >= interval;
+}
+function makeDefaultWordList(){
+  return DEFAULT_WORDS.map(([en,ja,type]) => ({
+    id: uid(), en, ja, type, box: 0, lastReviewed: null, correct: 0, wrong: 0
+  }));
+}
+function escapeHtml(s){
+  return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+function showToast(msg){
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(()=> t.classList.remove('show'), 1600);
 }
 
 /* ---------- 発音(音声合成) ---------- */
@@ -376,52 +496,268 @@ function speak(text, accent){
   window.speechSynthesis.speak(utter);
 }
 
-/* ---------- データの読み書き ---------- */
-async function loadData(){
+/* ---------- データの読み書き(ファイル対応) ---------- */
+async function loadSettings(){
+  settings = { accent: "uk", reviewDirection: "en-ja" };
   try{
-    const raw = localStorage.getItem(STORE_KEY);
-    if(raw){
-      words = JSON.parse(raw).map(w => ({ type: 'word', ...w }));
-    } else {
-      words = DEFAULT_WORDS.map(([en,ja,type]) => ({
-        id: uid(), en, ja, type, box: 0, lastReviewed: null, correct: 0, wrong: 0
-      }));
-      await saveData();
-    }
-  } catch(e){
-    words = DEFAULT_WORDS.map(([en,ja,type]) => ({
-      id: uid(), en, ja, type, box: 0, lastReviewed: null, correct: 0, wrong: 0
-    }));
-  }
-  try{
-    const raw2 = localStorage.getItem(SETTINGS_KEY);
-    if(raw2) settings = { accent: "uk", reviewDirection: "en-ja", ...JSON.parse(raw2) };
+    const raw = localStorage.getItem(SETTINGS_KEY);
+    if(raw) settings = { accent: "uk", reviewDirection: "en-ja", ...JSON.parse(raw) };
   } catch(e){ /* 既定値を使う */ }
-}
-async function saveData(){
-  try{ localStorage.setItem(STORE_KEY, JSON.stringify(words)); } catch(e){}
 }
 async function saveSettings(){
   try{ localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings)); } catch(e){}
 }
-
-function showToast(msg){
-  const t = document.getElementById('toast');
-  t.textContent = msg;
-  t.classList.add('show');
-  setTimeout(()=> t.classList.remove('show'), 1600);
+async function loadStore(){
+  try{
+    const raw = localStorage.getItem(STORE_KEY);
+    if(raw){
+      const parsed = JSON.parse(raw);
+      store.files = Array.isArray(parsed.files) ? parsed.files : [];
+      store.wordsByFile = (parsed.wordsByFile && typeof parsed.wordsByFile === 'object') ? parsed.wordsByFile : {};
+      return;
+    }
+    // 旧バージョン(ファイル分けなし)のデータがあれば1つのファイルとして引き継ぐ
+    let initialWords = null;
+    try{
+      const oldRaw = localStorage.getItem(OLD_STORE_KEY);
+      if(oldRaw) initialWords = JSON.parse(oldRaw).map(w => ({ type: 'word', ...w }));
+    } catch(e){ initialWords = null; }
+    if(!initialWords || !initialWords.length) initialWords = makeDefaultWordList();
+    const id = uid();
+    store.files = [{ id, name: "マイ単語帳", createdAt: todayStr() }];
+    store.wordsByFile = { [id]: initialWords };
+    persistStore();
+  } catch(e){
+    const id = uid();
+    store.files = [{ id, name: "マイ単語帳", createdAt: todayStr() }];
+    store.wordsByFile = { [id]: makeDefaultWordList() };
+  }
+}
+function persistStore(){
+  try{ localStorage.setItem(STORE_KEY, JSON.stringify(store)); } catch(e){}
+}
+async function saveData(){
+  if(!currentFileId) return;
+  store.wordsByFile[currentFileId] = words;
+  persistStore();
 }
 
+/* ---------- 画面切り替え ---------- */
 function switchScreen(name){
   currentScreen = name;
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
   document.getElementById('screen-'+name).classList.add('active');
-  document.querySelectorAll('nav button').forEach(b => b.classList.toggle('active', b.dataset.screen === name));
+  document.querySelectorAll('#main-nav button').forEach(b => b.classList.toggle('active', b.dataset.screen === name));
+  document.getElementById('main-nav').style.display = (name === 'home') ? 'none' : 'flex';
+  closeMenu();
+  if(name === 'home') renderHome();
   if(name === 'review') openReview();
   if(name === 'quiz') renderQuizStart();
   if(name === 'list') renderList();
   if(name === 'stats') renderStats();
   if(name === 'settings') renderSettings();
+}
+document.querySelectorAll('#main-nav button').forEach(btn => btn.addEventListener('click', () => switchScreen(btn.dataset.screen)));
+
+function goHome(){
+  currentFileId = null;
+  switchScreen('home');
+}
+document.getElementById('brand-home-btn').addEventListener('click', goHome);
+
+/* ---------- ハンバーガーメニュー(右からのドロワー) ---------- */
+const hamburgerBtn = document.getElementById('hamburger-btn');
+const menuPanel = document.getElementById('menu-panel');
+const menuBackdrop = document.getElementById('menu-backdrop');
+function closeMenu(){
+  menuPanel.classList.remove('open');
+  menuBackdrop.classList.remove('show');
+}
+function openMenu(){
+  menuPanel.classList.add('open');
+  menuBackdrop.classList.add('show');
+}
+hamburgerBtn.addEventListener('click', (e) => {
+  e.stopPropagation();
+  if(menuPanel.classList.contains('open')) closeMenu(); else openMenu();
+});
+menuBackdrop.addEventListener('click', closeMenu);
+document.getElementById('menu-close-btn').addEventListener('click', closeMenu);
+menuPanel.querySelectorAll('button[data-menu]').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const target = btn.dataset.menu;
+    closeMenu();
+    if(target === 'home') goHome();
+    else switchScreen(target);
+  });
+});
+
+/* ---------- ファイルアイコン(端末の写真から変更) ---------- */
+let pendingIconFileId = null;
+const iconFileInput = document.getElementById('icon-file-input');
+function avatarColor(name){
+  let hash = 0;
+  for(let i=0;i<name.length;i++){ hash = name.charCodeAt(i) + ((hash<<5) - hash); }
+  const hue = Math.abs(hash) % 360;
+  return `hsl(${hue}, 55%, 42%)`;
+}
+function resizeImageToDataURL(file, maxSize){
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const img = new Image();
+      img.onload = () => {
+        let w = img.width, h = img.height;
+        if(w > h){ if(w > maxSize){ h = Math.round(h * maxSize / w); w = maxSize; } }
+        else { if(h > maxSize){ w = Math.round(w * maxSize / h); h = maxSize; } }
+        const canvas = document.createElement('canvas');
+        canvas.width = w; canvas.height = h;
+        canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+        resolve(canvas.toDataURL('image/jpeg', 0.85));
+      };
+      img.onerror = reject;
+      img.src = e.target.result;
+    };
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
+iconFileInput.addEventListener('change', async () => {
+  const file = iconFileInput.files[0];
+  const targetId = pendingIconFileId;
+  pendingIconFileId = null;
+  if(!file || !targetId) return;
+  try{
+    const dataUrl = await resizeImageToDataURL(file, 128);
+    const f = store.files.find(x => x.id === targetId);
+    if(f){
+      f.icon = dataUrl;
+      persistStore();
+      renderHome();
+      showToast('アイコンを変更しました');
+    }
+  } catch(e){
+    showToast('画像を読み込めませんでした');
+  }
+  iconFileInput.value = '';
+});
+
+/* ---------- ホーム(ファイル選択) ---------- */
+function renderHome(){
+  document.getElementById('current-file-name').textContent = '';
+  const body = document.getElementById('home-body');
+  const files = [...store.files].sort((a,b) => (b.favorite?1:0) - (a.favorite?1:0));
+
+  const rows = files.map(f => {
+    const list = store.wordsByFile[f.id] || [];
+    const due = list.filter(isDue).length;
+    const initial = escapeHtml((f.name || '?').trim().charAt(0).toUpperCase() || '?');
+    const iconInner = f.icon ? `<img src="${f.icon}" alt="">` : `<span>${initial}</span>`;
+    const iconStyle = f.icon ? '' : ` style="background:${avatarColor(f.name || '')}"`;
+    return `
+      <div class="file-row" data-id="${f.id}">
+        <div class="file-icon" data-id="${f.id}"${iconStyle}>${iconInner}</div>
+        <div class="file-info">
+          <div class="file-name">${escapeHtml(f.name)}</div>
+          <div class="file-meta">${list.length} 語 ・ 今日 ${due} 語</div>
+        </div>
+        <button class="star-btn ${f.favorite ? 'active' : ''}" data-id="${f.id}" type="button" aria-label="お気に入り">★</button>
+        <button class="file-del" data-id="${f.id}" type="button" aria-label="削除">✕</button>
+      </div>`;
+  }).join('');
+
+  body.innerHTML = `
+    ${files.length ? `<div class="file-list">${rows}</div>` : `<div class="empty" style="margin-bottom:20px">まだファイルがありません。右下の + から作成してください。</div>`}
+    <button class="fab-add" id="fab-add-file" type="button" aria-label="ファイルを追加">+</button>
+    <div class="modal-backdrop" id="new-file-backdrop" hidden>
+      <div class="modal-card">
+        <p class="section-title">新しいファイルを作成</p>
+        <div class="chip-row">
+          ${['試験対策','IELTS','TOEIC','日常会話'].map(s => `<button type="button" class="suggest-chip" data-name="${s}">${s}</button>`).join('')}
+        </div>
+        <div class="row">
+          <input id="new-file-name" type="text" placeholder="ファイル名 (例: IELTS単語)">
+        </div>
+        <button class="btn btn-primary btn-block" id="btn-create-file" type="button">作成する</button>
+        <button class="btn btn-block" id="btn-cancel-create" type="button" style="margin-top:8px">キャンセル</button>
+      </div>
+    </div>
+  `;
+
+  body.querySelectorAll('.file-row').forEach(row => {
+    row.addEventListener('click', (e) => {
+      if(e.target.closest('.file-del') || e.target.closest('.star-btn') || e.target.closest('.file-icon')) return;
+      openFile(row.dataset.id);
+    });
+  });
+  body.querySelectorAll('.file-del').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const f = store.files.find(x => x.id === btn.dataset.id);
+      if(!f) return;
+      if(confirm(`「${f.name}」を削除しますか?中の単語もすべて削除されます。`)){
+        deleteFile(btn.dataset.id);
+      }
+    });
+  });
+  body.querySelectorAll('.star-btn').forEach(btn => {
+    btn.addEventListener('click', (e) => { e.stopPropagation(); toggleFavorite(btn.dataset.id); });
+  });
+  body.querySelectorAll('.file-icon').forEach(el => {
+    el.addEventListener('click', (e) => {
+      e.stopPropagation();
+      pendingIconFileId = el.dataset.id;
+      iconFileInput.click();
+    });
+  });
+
+  const fab = document.getElementById('fab-add-file');
+  const modalBackdrop = document.getElementById('new-file-backdrop');
+  fab.addEventListener('click', () => { modalBackdrop.hidden = false; });
+  document.getElementById('btn-cancel-create').addEventListener('click', () => { modalBackdrop.hidden = true; });
+  modalBackdrop.addEventListener('click', (e) => { if(e.target === modalBackdrop) modalBackdrop.hidden = true; });
+  body.querySelectorAll('.suggest-chip').forEach(chip => {
+    chip.addEventListener('click', () => { document.getElementById('new-file-name').value = chip.dataset.name; });
+  });
+  document.getElementById('btn-create-file').addEventListener('click', () => {
+    const input = document.getElementById('new-file-name');
+    const name = input.value.trim();
+    if(!name){ showToast('ファイル名を入力してください'); return; }
+    createFile(name);
+    input.value = '';
+    modalBackdrop.hidden = true;
+  });
+}
+function createFile(name){
+  const id = uid();
+  store.files.push({ id, name, createdAt: todayStr(), favorite: false, icon: null });
+  store.wordsByFile[id] = [];
+  persistStore();
+  renderHome();
+  showToast('ファイルを作成しました');
+}
+function deleteFile(id){
+  store.files = store.files.filter(f => f.id !== id);
+  delete store.wordsByFile[id];
+  persistStore();
+  if(currentFileId === id) currentFileId = null;
+  renderHome();
+  showToast('削除しました');
+}
+function toggleFavorite(id){
+  const f = store.files.find(x => x.id === id);
+  if(!f) return;
+  f.favorite = !f.favorite;
+  persistStore();
+  renderHome();
+}
+function openFile(id){
+  currentFileId = id;
+  words = store.wordsByFile[id] || (store.wordsByFile[id] = []);
+  reviewQueue = null;
+  const f = store.files.find(x => x.id === id);
+  document.getElementById('current-file-name').textContent = f ? f.name : '';
+  switchScreen('review');
 }
 
 /* ---------- 復習(フラッシュカード・縦スクロール) ---------- */
@@ -469,6 +805,14 @@ function buildReviewDOM(){
   });
   body.appendChild(dirRow);
 
+  if(!currentFileId){
+    const empty = document.createElement('div');
+    empty.className = 'empty';
+    empty.textContent = 'ファイルが選択されていません。';
+    body.appendChild(empty);
+    return;
+  }
+
   if(reviewQueue.length === 0){
     const empty = document.createElement('div');
     empty.className = 'empty';
@@ -482,11 +826,6 @@ function buildReviewDOM(){
   header.className = 'due-count';
   header.innerHTML = `<span>今日の復習</span><span id="review-progress"></span>`;
   body.appendChild(header);
-
-  const hint = document.createElement('p');
-  hint.className = 'scroll-hint';
-  hint.textContent = '判定したら、指で上にスワイプ(スクロール)して次の単語へ進みます';
-  body.appendChild(hint);
 
   const scrollEl = document.createElement('div');
   scrollEl.className = 'review-scroll';
@@ -733,12 +1072,10 @@ async function fetchCandidates(text){
   }
   return deduped.slice(0, 8);
 }
-
 async function doLookup(en){
   const box = document.getElementById('candidates');
-  const lookupBtn = document.getElementById('btn-lookup');
-  const myToken = ++lookupToken;
   box.innerHTML = `<span style="font-size:12px;color:var(--chalk-faint)">検索中…</span>`;
+  const myToken = ++lookupToken;
   try{
     const candidates = await fetchCandidates(en);
     if(myToken !== lookupToken) return;
@@ -759,7 +1096,6 @@ async function doLookup(en){
     box.innerHTML = `<span style="font-size:12px;color:var(--chalk-faint)">候補を取得できませんでした(ネット接続が必要です)。直接入力してください。</span>`;
   }
 }
-
 const enInputEl = document.getElementById('in-en');
 const cambridgeLinkEl = document.getElementById('cambridge-link');
 enInputEl.addEventListener('input', () => {
@@ -781,7 +1117,6 @@ enInputEl.addEventListener('input', () => {
   }
   lookupTimer = setTimeout(() => doLookup(val), 500);
 });
-
 document.getElementById('btn-lookup').addEventListener('click', () => {
   const en = document.getElementById('in-en').value.trim();
   const err = document.getElementById('add-err');
@@ -794,7 +1129,6 @@ document.getElementById('btn-lookup').addEventListener('click', () => {
   clearTimeout(lookupTimer);
   doLookup(en);
 });
-
 document.getElementById('btn-add').addEventListener('click', () => {
   const enInput = document.getElementById('in-en');
   const jaInput = document.getElementById('in-ja');
@@ -881,17 +1215,12 @@ document.querySelectorAll('input[name="direction"]').forEach(r => {
   });
 });
 
-function escapeHtml(s){
-  return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-}
-
-document.querySelectorAll('nav button').forEach(btn => btn.addEventListener('click', () => switchScreen(btn.dataset.screen)));
-
 (async function init(){
-  await loadData();
+  await loadSettings();
+  await loadStore();
   document.getElementById('loading').style.display = 'none';
   document.getElementById('app').style.display = 'block';
-  openReview();
+  switchScreen('home');
 })();
 
 if('serviceWorker' in navigator){
