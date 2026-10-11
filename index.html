@@ -1259,11 +1259,23 @@ document.querySelectorAll('input[name="direction"]').forEach(r => {
   switchScreen('home');
 })();
 
+/* ---------- オフライン対応(Service Worker)と自動更新 ---------- */
 if('serviceWorker' in navigator){
+  let hadController = !!navigator.serviceWorker.controller;
+  let reloading = false;
+  navigator.serviceWorker.addEventListener('controllerchange', () => {
+    if(!hadController){ hadController = true; return; }  // 初回インストール時は再読み込みしない
+    if(reloading) return;
+    reloading = true;
+    location.reload();  // 新しいバージョンに切り替わったら自動で読み込み直す
+  });
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('sw.js').catch(() => {
-      /* オフライン対応ができなくても、アプリ自体は通常どおり使えます */
-    });
+    navigator.serviceWorker.register('sw.js', { updateViaCache: 'none' }).then(reg => {
+      reg.update();
+      document.addEventListener('visibilitychange', () => {
+        if(document.visibilityState === 'visible') reg.update();  // アプリに戻ったときも更新を確認
+      });
+    }).catch(() => { /* 登録できなくてもアプリ自体は通常どおり使えます */ });
   });
 }
 </script>
