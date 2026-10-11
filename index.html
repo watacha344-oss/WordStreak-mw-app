@@ -103,30 +103,37 @@
   }
   .empty button{ margin-top:14px; }
 
-  /* --- home / file picker --- */
-  .file-list{ margin-bottom: 22px; padding-top: 4px; }
-  .file-row{
-    display:flex; align-items:center; gap:12px; border: 1px solid transparent;
-    border-radius: 14px; padding: 10px 8px; margin-bottom: 4px; cursor:pointer; background: transparent;
-    transition: background 0.15s, border-color 0.15s;
+  /* --- home / file picker (card style) --- */
+  .file-list{ margin-bottom: 90px; padding-top: 4px; }
+  .file-card{
+    display:flex; align-items:center; gap:14px; position:relative;
+    background: var(--board-2); border: 1px solid var(--line-strong);
+    border-radius: 18px; padding: 14px; margin-bottom: 12px; cursor:pointer;
+    box-shadow: 0 6px 18px rgba(0,0,0,0.35);
+    transition: transform 0.12s ease, border-color 0.15s;
   }
-  .file-row:hover{ background: var(--board-2); border-color: var(--line-strong); }
+  .file-card:active{ transform: scale(0.98); }
+  .file-card.has-due{ border-color: var(--yellow-dim); box-shadow: 0 6px 22px rgba(47,232,208,0.10); }
   .file-icon{
-    width:42px; height:42px; border-radius: 12px; flex-shrink:0; overflow:hidden;
-    display:flex; align-items:center; justify-content:center; cursor:pointer;
-    font-family:'Inter', sans-serif; font-weight:700; font-size:16px; color:#fff;
+    width:48px; height:48px; border-radius: 14px; flex-shrink:0; overflow:hidden;
+    display:flex; align-items:center; justify-content:center;
+    font-family:'Inter', sans-serif; font-weight:700; font-size:18px; color:#fff;
   }
   .file-icon img{ width:100%; height:100%; object-fit:cover; }
   .file-info{ flex:1; min-width:0; }
-  .file-name{ font-size: 14.5px; color: var(--chalk); font-weight:600; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
-  .file-meta{ font-size: 11.5px; color: var(--chalk-faint); margin-top: 2px; }
-  .star-btn{
-    background:none; border:none; font-size:16px; cursor:pointer; padding: 4px 6px; flex-shrink:0;
-    color: var(--line-strong);
-  }
+  .file-name{ font-size: 15.5px; color: var(--chalk); font-weight:700; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .file-meta{ font-size: 11.5px; color: var(--chalk-faint); margin-top: 3px; display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
+  .due-badge{ color: var(--yellow); background: var(--yellow-dim); border-radius: 10px; padding: 1px 8px; font-size: 11px; font-weight:500; }
+  .done-badge{ color: var(--mint); background: var(--mint-dim); border-radius: 10px; padding: 1px 8px; font-size: 11px; }
+  .file-progress{ height:4px; background: var(--line); border-radius:2px; margin-top:9px; overflow:hidden; }
+  .file-progress div{ height:100%; background: var(--mint); border-radius:2px; }
+  .file-side{ display:flex; flex-direction:column; align-items:center; gap:2px; flex-shrink:0; }
+  .star-btn{ background:none; border:none; font-size:17px; cursor:pointer; padding: 4px 8px; color: var(--line-strong); }
   .star-btn.active{ color: var(--yellow); }
-  .file-del{ background:none; border:none; color: var(--chalk-faint); font-size:15px; cursor:pointer; padding: 4px 6px; flex-shrink:0; }
-  .file-del:hover{ color: var(--coral); }
+  .more-btn{ background:none; border:none; font-size:18px; line-height:1; cursor:pointer; padding: 4px 8px; color: var(--chalk-faint); }
+  .more-btn:hover{ color: var(--chalk); }
+  .btn-danger{ color: var(--coral); border-color: var(--coral-dim); }
+  .btn-danger:hover{ color: var(--coral); border-color: var(--coral); }
 
   .fab-add{
     position:fixed; right:24px; bottom:28px; width:56px; height:56px; border-radius:50%;
@@ -317,7 +324,7 @@
   .toast{
     position:fixed; bottom: 20px; left:50%; transform: translateX(-50%); background: var(--board-2);
     border: 1px solid var(--yellow-dim); color: var(--yellow); padding: 10px 18px; border-radius: 20px;
-    font-size: 13px; opacity:0; pointer-events:none; transition: opacity 0.3s; z-index: 10;
+    font-size: 13px; opacity:0; pointer-events:none; transition: opacity 0.3s; z-index: 70;
   }
   .toast.show{ opacity:1; }
   .loading{ text-align:center; padding: 60px 0; color: var(--chalk-faint); font-size:13px; }
@@ -642,7 +649,8 @@ iconFileInput.addEventListener('change', async () => {
   iconFileInput.value = '';
 });
 
-/* ---------- ホーム(ファイル選択) ---------- */
+/* ---------- ホーム(ファイル選択・カード型) ---------- */
+let actionFileId = null;
 function renderHome(){
   document.getElementById('current-file-name').textContent = '';
   const body = document.getElementById('home-body');
@@ -651,23 +659,31 @@ function renderHome(){
   const rows = files.map(f => {
     const list = store.wordsByFile[f.id] || [];
     const due = list.filter(isDue).length;
+    const mastered = list.filter(w => w.box >= MAX_BOX).length;
+    const pct = list.length ? Math.round(mastered / list.length * 100) : 0;
     const initial = escapeHtml((f.name || '?').trim().charAt(0).toUpperCase() || '?');
     const iconInner = f.icon ? `<img src="${f.icon}" alt="">` : `<span>${initial}</span>`;
     const iconStyle = f.icon ? '' : ` style="background:${avatarColor(f.name || '')}"`;
+    const badge = list.length === 0 ? '' : (due > 0
+      ? `<span class="due-badge">今日 ${due} 語</span>`
+      : `<span class="done-badge">復習済み</span>`);
     return `
-      <div class="file-row" data-id="${f.id}">
-        <div class="file-icon" data-id="${f.id}"${iconStyle}>${iconInner}</div>
+      <div class="file-card ${due > 0 ? 'has-due' : ''}" data-id="${f.id}">
+        <div class="file-icon"${iconStyle}>${iconInner}</div>
         <div class="file-info">
           <div class="file-name">${escapeHtml(f.name)}</div>
-          <div class="file-meta">${list.length} 語 ・ 今日 ${due} 語</div>
+          <div class="file-meta"><span>${list.length} 語 ・ マスター ${pct}%</span>${badge}</div>
+          <div class="file-progress"><div style="width:${pct}%"></div></div>
         </div>
-        <button class="star-btn ${f.favorite ? 'active' : ''}" data-id="${f.id}" type="button" aria-label="お気に入り">★</button>
-        <button class="file-del" data-id="${f.id}" type="button" aria-label="削除">✕</button>
+        <div class="file-side">
+          <button class="star-btn ${f.favorite ? 'active' : ''}" data-id="${f.id}" type="button" aria-label="お気に入り">★</button>
+          <button class="more-btn" data-id="${f.id}" type="button" aria-label="メニュー">⋯</button>
+        </div>
       </div>`;
   }).join('');
 
   body.innerHTML = `
-    ${files.length ? `<div class="file-list">${rows}</div>` : `<div class="empty" style="margin-bottom:20px">まだファイルがありません。右下の + から作成してください。</div>`}
+    ${files.length ? `<div class="file-list">${rows}</div>` : `<div class="empty" style="margin-bottom:20px">まだファイルがありません。<br>最初のファイルを作りましょう。<br><button class="btn btn-primary" id="btn-empty-create" type="button">最初のファイルを作る</button></div>`}
     <button class="fab-add" id="fab-add-file" type="button" aria-label="ファイルを追加">+</button>
     <div class="modal-backdrop" id="new-file-backdrop" hidden>
       <div class="modal-card">
@@ -682,38 +698,58 @@ function renderHome(){
         <button class="btn btn-block" id="btn-cancel-create" type="button" style="margin-top:8px">キャンセル</button>
       </div>
     </div>
+    <div class="modal-backdrop" id="action-backdrop" hidden>
+      <div class="modal-card">
+        <p class="section-title" id="action-title"></p>
+        <button class="btn btn-block" id="btn-change-icon" type="button">アイコンを変更する</button>
+        <button class="btn btn-block btn-danger" id="btn-delete-file" type="button" style="margin-top:8px">このファイルを削除する</button>
+        <button class="btn btn-block" id="btn-cancel-action" type="button" style="margin-top:8px">キャンセル</button>
+      </div>
+    </div>
   `;
 
-  body.querySelectorAll('.file-row').forEach(row => {
-    row.addEventListener('click', (e) => {
-      if(e.target.closest('.file-del') || e.target.closest('.star-btn') || e.target.closest('.file-icon')) return;
-      openFile(row.dataset.id);
-    });
-  });
-  body.querySelectorAll('.file-del').forEach(btn => {
-    btn.addEventListener('click', (e) => {
-      e.stopPropagation();
-      const f = store.files.find(x => x.id === btn.dataset.id);
-      if(!f) return;
-      if(confirm(`「${f.name}」を削除しますか?中の単語もすべて削除されます。`)){
-        deleteFile(btn.dataset.id);
-      }
+  body.querySelectorAll('.file-card').forEach(card => {
+    card.addEventListener('click', (e) => {
+      if(e.target.closest('.star-btn') || e.target.closest('.more-btn')) return;
+      openFile(card.dataset.id);
     });
   });
   body.querySelectorAll('.star-btn').forEach(btn => {
     btn.addEventListener('click', (e) => { e.stopPropagation(); toggleFavorite(btn.dataset.id); });
   });
-  body.querySelectorAll('.file-icon').forEach(el => {
-    el.addEventListener('click', (e) => {
+
+  const actionBackdrop = document.getElementById('action-backdrop');
+  body.querySelectorAll('.more-btn').forEach(btn => {
+    btn.addEventListener('click', (e) => {
       e.stopPropagation();
-      pendingIconFileId = el.dataset.id;
-      iconFileInput.click();
+      const f = store.files.find(x => x.id === btn.dataset.id);
+      if(!f) return;
+      actionFileId = f.id;
+      document.getElementById('action-title').textContent = f.name;
+      actionBackdrop.hidden = false;
     });
   });
+  const closeAction = () => { actionBackdrop.hidden = true; };
+  document.getElementById('btn-cancel-action').addEventListener('click', closeAction);
+  actionBackdrop.addEventListener('click', (e) => { if(e.target === actionBackdrop) closeAction(); });
+  document.getElementById('btn-change-icon').addEventListener('click', () => {
+    pendingIconFileId = actionFileId;
+    closeAction();
+    iconFileInput.click();
+  });
+  document.getElementById('btn-delete-file').addEventListener('click', () => {
+    const f = store.files.find(x => x.id === actionFileId);
+    closeAction();
+    if(f && confirm(`「${f.name}」を削除しますか?中の単語もすべて削除されます。`)){
+      deleteFile(f.id);
+    }
+  });
 
-  const fab = document.getElementById('fab-add-file');
   const modalBackdrop = document.getElementById('new-file-backdrop');
-  fab.addEventListener('click', () => { modalBackdrop.hidden = false; });
+  const openCreate = () => { modalBackdrop.hidden = false; };
+  document.getElementById('fab-add-file').addEventListener('click', openCreate);
+  const emptyBtn = document.getElementById('btn-empty-create');
+  if(emptyBtn) emptyBtn.addEventListener('click', openCreate);
   document.getElementById('btn-cancel-create').addEventListener('click', () => { modalBackdrop.hidden = true; });
   modalBackdrop.addEventListener('click', (e) => { if(e.target === modalBackdrop) modalBackdrop.hidden = true; });
   body.querySelectorAll('.suggest-chip').forEach(chip => {
@@ -1225,7 +1261,7 @@ document.querySelectorAll('input[name="direction"]').forEach(r => {
 
 if('serviceWorker' in navigator){
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('service-worker.js').catch(() => {
+    navigator.serviceWorker.register('sw.js').catch(() => {
       /* オフライン対応ができなくても、アプリ自体は通常どおり使えます */
     });
   });
