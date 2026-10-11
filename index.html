@@ -351,6 +351,7 @@
     <button type="button" data-menu="stats">成績</button>
     <button type="button" data-menu="settings">設定</button>
     <button type="button" data-menu="home">ファイルを切り替える</button>
+    <button type="button" data-menu="presets">付属の単語帳を追加し直す</button>
   </div>
 
   <input type="file" id="icon-file-input" accept="image/*" style="display:none">
@@ -421,6 +422,7 @@
 </div>
 <div class="toast" id="toast"></div>
 
+<script src="words-data.js"></script>
 <script>
 const DEFAULT_WORDS = [
   ["abandon","捨てる、見放す","word"],["ability","能力","word"],["absorb","吸収する","word"],
@@ -521,6 +523,7 @@ async function loadStore(){
       const parsed = JSON.parse(raw);
       store.files = Array.isArray(parsed.files) ? parsed.files : [];
       store.wordsByFile = (parsed.wordsByFile && typeof parsed.wordsByFile === 'object') ? parsed.wordsByFile : {};
+      store.importedPresets = Array.isArray(parsed.importedPresets) ? parsed.importedPresets : [];
       return;
     }
     // 旧バージョン(ファイル分けなし)のデータがあれば1つのファイルとして引き継ぐ
@@ -539,6 +542,27 @@ async function loadStore(){
     store.files = [{ id, name: "マイ単語帳", createdAt: todayStr() }];
     store.wordsByFile = { [id]: makeDefaultWordList() };
   }
+}
+/* ---------- 付属の単語帳(Section 1〜5)の取り込み ---------- */
+function importPresets(force){
+  if(typeof PRESET_SECTIONS === 'undefined') return 0;
+  if(!Array.isArray(store.importedPresets)) store.importedPresets = [];
+  let added = 0;
+  PRESET_SECTIONS.forEach(sec => {
+    const skip = force
+      ? store.files.some(f => f.presetId === sec.id)
+      : store.importedPresets.includes(sec.id);
+    if(skip) return;
+    const id = uid();
+    store.files.push({ id, name: sec.name, createdAt: todayStr(), favorite: false, icon: null, presetId: sec.id });
+    store.wordsByFile[id] = sec.words.map(([en, ja]) => ({
+      id: uid(), en, ja, type: 'word', box: 0, lastReviewed: null, correct: 0, wrong: 0
+    }));
+    if(!store.importedPresets.includes(sec.id)) store.importedPresets.push(sec.id);
+    added++;
+  });
+  if(added) persistStore();
+  return added;
 }
 function persistStore(){
   try{ localStorage.setItem(STORE_KEY, JSON.stringify(store)); } catch(e){}
@@ -595,6 +619,11 @@ menuPanel.querySelectorAll('button[data-menu]').forEach(btn => {
     const target = btn.dataset.menu;
     closeMenu();
     if(target === 'home') goHome();
+    else if(target === 'presets'){
+      const n = importPresets(true);
+      showToast(n ? `${n}個の単語帳を追加しました` : '追加するものはありません');
+      if(currentScreen === 'home') renderHome();
+    }
     else switchScreen(target);
   });
 });
@@ -1254,6 +1283,7 @@ document.querySelectorAll('input[name="direction"]').forEach(r => {
 (async function init(){
   await loadSettings();
   await loadStore();
+  importPresets(false);
   document.getElementById('loading').style.display = 'none';
   document.getElementById('app').style.display = 'block';
   switchScreen('home');
