@@ -1,5 +1,5 @@
 // 更新したら、この番号を v2, v3 ... と上げてください
-const CACHE_NAME = "wordstreak-cache-v2";
+const CACHE_NAME = "wordstreak-cache-v3";
 const FILES_TO_CACHE = [
   "./index.html",
   "./manifest.json",
